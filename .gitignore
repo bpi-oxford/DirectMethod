@@ -35,3 +35,5 @@ __pycache__
 *monkeytype.sqlite3
 .idea/
 */.idea/
+
+*.npz
