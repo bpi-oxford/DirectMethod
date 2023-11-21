@@ -1,0 +1,36 @@
+# This describes the Hertz Ring Structure
+[dataset]
+name = "hertzRing"
+
+[substrate]
+E = 3.0 # 50 kPa
+E_unit = "kPa"
+nu = 0.45
+
+[image]
+spacing_xy = 0.8 # µm
+spacing_z = 2.0 # µm
+
+# micronsPerPixel=0.1 # µm
+# layerDistance=0.25 # µm
+
+[simulation]
+n_points_xy = 256
+n_points_z = 10
+
+# numberOfLayers = 80
+# xyPix = 2048
+
+[adheasion.inner]
+type = "indentor"
+F = 1 # µN Total force per adheasion site
+F_unit = "µN"
+a = 45  # 20 µm Distance between counteracting adheasion sites
+pos = [0,0] # Dipole center (µm,µm)
+
+[adheasion.outer]
+type = "indentor"
+F = -1 # µN Total force per adheasion site
+F_unit = "µN"
+a = 60  # 20 µm Distance between counteracting adheasion sites
+pos = [0,0] # Dipole center (µm,µm)
