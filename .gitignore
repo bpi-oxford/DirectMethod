@@ -37,4 +37,4 @@ __pycache__
 */.idea/
 
 *.npz
-./bak
+bak/
