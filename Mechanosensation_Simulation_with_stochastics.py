@@ -49,6 +49,9 @@ import trackpy as tp
 import scipy
 from skimage import measure
 
+
+__name__ = "__main__"
+
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
 
@@ -429,66 +432,42 @@ def precision_image(_im,_gt):
 # print(precision_image(gt,gt))
 # print(accuracy_image(gt,gt))
 
-def traction(F,E):
-    array = np.zeros(np.shape(xx))
-    print(array)
-    k = 0
-    for e in range(len(E)): 
-        n = 0
-        for  f in range(len(F)): 
-            name = 'tractions/tractions_displacement_' + str(F[f]) + '_nN_on_' + str(E[e]) + '_kPa.npz'
-            print(name)
-            file = dict(np.load(name))
-            #print(file.keys())
-            array[e][f] = np.max(file['qAbs'])
-            print(f,e)
-            #plt.imshow(file['qAbs'])
-            #plt.show()
-            n = n+1
-        k = k+1
-    return array
-
-def filtered_traction(F,E):
-    array = np.empty(np.shape(xx))
-    #print(array)
-    k = 0
-    for e in range(len(E)): 
-        n = 0
-        for  f in range(len(F)): 
-            name = 'tractions/tractions_filtered_displacement_' + str(F[f]) + '_nN_on_' + str(E[e]) + '_kPa.npz'
-            file = dict(np.load(name))
-            array[f][e] = np.max(file['qAbs'])
-            #print(k,n,'\n',f,e)
-            #plt.imshow(file['qAbs'])
-            #plt.show()
-            n = n+1
-        k = k+1
-    return array
-
-def main():
+#%%
+# Run Skript
+if __name__ == "__main__":
+    
     start_time = time.time()
-
-    # create output directories
+    
+    
     tom_loc = r'toml_files'
-    os.makedirs(tom_loc, exist_ok=True)
+    if not os.path.exists(tom_loc):
+        os.makedirs(tom_loc)
 
     dis_loc = r'displacement_fields'
-    os.makedirs(dis_loc, exist_ok=True)
+    if not os.path.exists(dis_loc):
+        os.makedirs(dis_loc)
         
     filter_loc = r'filtered_displacement_fields'
-    os.makedirs(filter_loc,exist_ok=True)
+    if not os.path.exists(filter_loc):
+        os.makedirs(filter_loc)
 
     image_loc = r'synthetic_images'
-    os.makedirs(image_loc, exist_ok=True)
+    if not os.path.exists(image_loc):
+        os.makedirs(image_loc)
 
     plot_loc = r'plotting'
-    os.makedirs(plot_loc, exist_ok=True)
+    if not os.path.exists(plot_loc):
+        os.makedirs(plot_loc)
         
     trac_loc = r'tractions'
-    os.makedirs(trac_loc, exist_ok=True)
+    if not os.path.exists(trac_loc):
+        os.makedirs(trac_loc)
 
     bead_loc = r'beads'
-    os.makedirs(bead_loc, exist_ok=True)
+    if not os.path.exists(bead_loc):
+        os.makedirs(bead_loc)
+        
+    
         
     #Define parameter space
     microscope_resolution = 0.18 # in um Confocal
@@ -885,296 +864,330 @@ def main():
     
     #%%
     np.savez('results_confocal.npz', mean_svd, mean_accuracy, mean_precision)
+#%%
+# Calculate mean force heatmap to compare datasets
 
-    #%%
-    # Calculate mean force heatmap to compare datasets
-
-    xx, yy = np.meshgrid(force_list, young_list)
-    # plt.scatter(xx,yy) 
-
-    traction_map  = traction(force_list, young_list)
-    filtered_traction_map = filtered_traction(force_list, young_list)
-    #%%
-    plt.figure( dpi = 150)
-    plt.imshow(traction_map)
-    plt.title('max traction')
-    plt.colorbar()
-    plt.show()
-
-    plt.figure( dpi = 150)
-    plt.title('filtered_max_traction')
-    plt.imshow(filtered_traction_map)
-    plt.colorbar()
-    plt.show()
-
-    print('Accuracy: ', np.max(filtered_traction_map)/np.max(traction_map)*100, '%s')
-
-    plt.figure(dpi = 150)
-    plt.imshow(filtered_traction_map/traction_map )
-    plt.colorbar()
-    plt.show()
-    print(np.round(filtered_traction_map/traction_map, decimals= 4))
-    #plt.xticks([round(i) for i in range(0,len(young_list),xstep)],young_list[::xstep], rotation = 90)
-    #plt.yticks([round(i) for i in range(0,len(force_list),ystep)], np.round(force_list[::ystep], decimals= 2))
+xx, yy = np.meshgrid(force_list, young_list)
+# plt.scatter(xx,yy) 
 
 
-    #%%
-    # plot force profiles 
-    noise_list = []
-    noise_list_raw = []
+def traction(F,E):
+    array = np.zeros(np.shape(xx))
+    print(array)
+    k = 0
+    for e in range(len(E)): 
+        n = 0
+        for  f in range(len(F)): 
+            name = 'tractions/tractions_displacement_' + str(F[f]) + '_nN_on_' + str(E[e]) + '_kPa.npz'
+            print(name)
+            file = dict(np.load(name))
+            #print(file.keys())
+            array[e][f] = np.max(file['qAbs'])
+            print(f,e)
+            #plt.imshow(file['qAbs'])
+            #plt.show()
+            n = n+1
+        k = k+1
+    return array
 
-    mean_traction_list = []
-    peak_traction_filtered = []
-    accuracy_list = []
-    for f in force_list:
-        for e in young_list:
-            path = 'tractions/tractions_displacement_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
-            path_filtered = 'tractions/tractions_filtered_displacement_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
-            T = np.load(path)['qAbs']
-            #T_mask = (T < (0.04))
-            #T = T_mask * T
-            T_filt = np.load(path_filtered)['qAbs']
-            i = 'tractions_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
-            
-            # determine and append noise:
-            # using skimage estimator:    
-            #noise_list.append(2*estimate_sigma(T_filt))
-            # using mean of a low impact window at upper right 80-90 % corner length:
-            T_crop = T_filt[ int(0.8*len(T_filt)) : int(0.9*len(T_filt))
-                            ,int(0.8*len(T_filt)) : int(0.9*len(T_filt))]
-            
-            T_crop_raw = T_filt[ int(0.8*len(T)) : int(0.9*len(T))
-                            ,int(0.8*len(T)) : int(0.9*len(T))]
-            
-            noise_list.append(np.mean(T_crop))
-            noise_list_raw.append(np.mean(T_crop_raw))
-            plot_sub_image = False
-            if plot_sub_image == True: 
-                plt.imshow(T_crop, vmin = 0, vmax = 10, origin = 'lower', cmap = 'turbo')
-                plt.colorbar()
-                plt.show()
-                #print(noise_list[-1])
-            
-            #print('bg_traction: ',noise[-1], ' Pa')
-            # crop center to didtch edges
-            T_crop_center = T_filt[ int(0.2*len(T_filt)) : int(0.8*len(T_filt))
-                            ,int(0.2*len(T_filt)) : int(0.8*len(T_filt))]
-            mean_traction_list.append(np.mean(T_crop_center))
-            peak_traction_filtered.append(np.max(T_crop_center))
-            
-            title =  str(f) + 'nN on ' + str(e) + ' kPa'
+def filtered_traction(F,E):
+    array = np.empty(np.shape(xx))
+    #print(array)
+    k = 0
+    for e in range(len(E)): 
+        n = 0
+        for  f in range(len(F)): 
+            name = 'tractions/tractions_filtered_displacement_' + str(F[f]) + '_nN_on_' + str(E[e]) + '_kPa.npz'
+            file = dict(np.load(name))
+            array[f][e] = np.max(file['qAbs'])
+            #print(k,n,'\n',f,e)
+            #plt.imshow(file['qAbs'])
+            #plt.show()
+            n = n+1
+        k = k+1
+    return array
 
-            show_maps = True 
-            if show_maps == True: 
-                minmin = 0
-                maxmax = None
-                vmax = 1
-                cmap = 'turbo'
+traction_map  = traction(force_list, young_list)
+filtered_traction_map = filtered_traction(force_list, young_list)
+#%%
+plt.figure( dpi = 150)
+plt.imshow(traction_map)
+plt.title('max traction')
+plt.colorbar()
+plt.show()
 
-                fig, axes = plt.subplots(nrows=1, ncols=3, dpi = 150, figsize = (15,5))
+plt.figure( dpi = 150)
+plt.title('filtered_max_traction')
+plt.imshow(filtered_traction_map)
+plt.colorbar()
+plt.show()
 
-                im1 = axes[0].imshow(T, vmin=minmin, vmax=maxmax,
-                        aspect='auto', cmap= cmap)
-                im2 = axes[1].imshow(T_filt, vmin=minmin, vmax=maxmax,
-                        aspect='auto', cmap= cmap)
-                
-                accuracy  = T_filt / T
+print('Accuracy: ', np.max(filtered_traction_map)/np.max(traction_map)*100, '%s')
+
+plt.figure(dpi = 150)
+plt.imshow(filtered_traction_map/traction_map )
+plt.colorbar()
+plt.show()
+print(np.round(filtered_traction_map/traction_map, decimals= 4))
+#plt.xticks([round(i) for i in range(0,len(young_list),xstep)],young_list[::xstep], rotation = 90)
+#plt.yticks([round(i) for i in range(0,len(force_list),ystep)], np.round(force_list[::ystep], decimals= 2))
+
+
+#%%
+# plot force profiles 
+noise_list = []
+noise_list_raw = []
+
+mean_traction_list = []
+peak_traction_filtered = []
+accuracy_list = []
+for f in force_list:
+    for e in young_list:
+        path = 'tractions/tractions_displacement_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
+        path_filtered = 'tractions/tractions_filtered_displacement_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
+        T = np.load(path)['qAbs']
+        #T_mask = (T < (0.04))
+        #T = T_mask * T
+        T_filt = np.load(path_filtered)['qAbs']
+        i = 'tractions_' + str(f) + '_nN_on_' + str(e) +'_kPa.npz'
         
-                im3 = axes[2].imshow(accuracy, vmin=0, vmax= None, aspect ='auto', cmap= cmap)
-
-                fig.subplots_adjust(right=0.85)
-                cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
-                cbar_ax2 = fig.add_axes([0.99, 0.15, 0.04, 0.7])
-                fig.colorbar(im2, cax=cbar_ax)
-                fig.colorbar(im3, cax = cbar_ax2)
-                fig.suptitle(title)
-                axes[0].set_title('raw')
-                axes[1].set_title('filtered')
-                axes[2].set_title('norm filtered - norm raw')
-                path = 'plotting/traction_maps/' + str() + '.png'
-                #plt.savefig(path)
-                plt.show()
-                #print('max_traction_accuracy: ', (np.max(T)-np.max(T_filt))/np.max(T))
-
-            show_hist = False
-
-            if show_hist == True: 
-                plt.figure(dpi= 150)
-                plt.title(i)
-                bins = np.linspace(0, 6000, 100)
-                hist, bins = np.histogram(T, bins = bins)
-                hist_f, bins_f = np.histogram(T_filt, bins = bins )
-                
-
-                
-                plt.plot(bins[0:-1], hist ,color = 'blue', label = 'raw', alpha = .5)
-                plt.plot(bins[0:-1], hist_f, color = 'red', label = 'filtered', alpha = .5)
-
-                #plt.plot(bins[0:-1], (hist-hist_f)/max(hist), color = 'green', label = 'raw - filtered')
-                plt.xlabel('traction [Pa]')
-                plt.ylabel('frequency')
-                #plt.xlim(0, 0.005)
-                #plt.ylim(0,1500)
-                plt.legend()
-                #plt.savefig('plotting/comparing_hist_'+ i[:-4] +  '.png')
-                plt.show()
-
-    # %%
-    # Plot line profiles
-    plt.figure(dpi = 150)
-    plt.title('background tractions for forces across gels')
-    plt.plot(np.transpose(noise_list),label =  force_list)
-    plt.legend()
-    plt.ylabel('T [PA]')
-    plt.xlabel('E [kPa]')
-    plt.xticks([i for i in range(len(young_list))], young_list)
-    plt.show()
-
-    plt.figure(dpi = 150)
-    plt.title('background tractions for gels')
-    plt.plot(noise_list,label =  young_list)
-    plt.legend()
-    plt.xticks([i for i in range(len(force_list))], force_list)
-    plt.xlabel('F [nN]')
-    plt.ylabel('T [PA]')
-
-    plt.show()
-
-    plt.figure(dpi = 150)
-    plt.title('background tractions for forces across gels')
-    plt.plot(np.transpose(noise_list),label =  force_list)
-    plt.legend()
-    plt.ylabel('T [PA]')
-    plt.xlabel('E [kPa]')
-    plt.xticks([i for i in range(len(young_list))], young_list)
-    plt.show()
-    #%%
-    # Plot signal to Noise
-    n = int(np.round(len(force_list)/7,0)) #spacing label
-    if n == 0: 
-        n = 1
-    plt.figure(dpi = 150)#0, figsize=(10,10))
-    plt.title('Signal / noise')
-    plt.imshow((peak_traction_filtered/(noise_list)),vmax = None, origin ='lower')#, norm = LogNorm(vmin = 1, vmax = 10e3))
-    plt.xticks([i for i in range(len(young_list))][::n], np.round(young_list[::n],1))
-    plt.yticks([i for i in range(len(force_list))][::n], np.round(force_list[::n],2))
-    plt.xlabel('E [kPa]')
-    plt.ylabel('F [nN]')
-    plt.title('Signal to Noise ratio')
-    clb = plt.colorbar()
-    clb.ax.set_ylabel('T [Pa]', rotation = -90)
-    plt.show()
-
-    #%%
-    plt.figure(dpi = 150)
-    plt.imshow((peak_traction_filtered/(noise_list))>5,vmax = None, origin ='lower')
-    plt.xticks([i for i in range(len(young_list))][::n], np.round(young_list[::n],1))
-    plt.yticks([i for i in range(len(force_list))][::n], np.round(force_list[::n],2))
-    plt.xlabel('E [kPa]')
-    plt.ylabel('F [nN]')
-    plt.title('Resolvability SNR > 5')
-    plt.colorbar()
-    plt.show()
-    #%%
-    x = []
-    std = []
-    for i in np.transpose(noise_list): 
-        x.append(np.mean(i))
-        std.append(np.std(i))
-
-    fig, axes = plt.subplots(dpi = 150)
-    plt.plot(young_list, x, c = 'b')
-    low = np.array(x) - np.array(std)
-    up  = np.array(x) + np.array(std)
-    axes.fill_between(np.array(young_list), low, up, facecolor = 'blue', alpha = .25)
-    axes.plot(young_list, np.transpose(noise_list), alpha = 0.2, c ='black' )
-
-    #plt.ylim(0,500)
-    axes.set_xlabel('E [kPa]')
-    axes.set_ylabel('T [Pa]')
-    axes.set_title('background tractions for gels')
-    plt.show()
-    #%%
-    # plot force projections for desired stiffness
-    E = young_list[1] 
-    print('Chosen Stiffness: ',E, ' kPa')
-    f_projection = []
-    for F in force_list:
-        path = 'tractions/tractions_filtered_displacement_' + str(F) + '_nN_on_' + str(E) + '_kPa.npz'
-        npz = np.load(path)
-        tractions = npz['qAbs'] 
-        f_projection.append(tractions)
+        # determine and append noise:
+        # using skimage estimator:    
+        #noise_list.append(2*estimate_sigma(T_filt))
+        # using mean of a low impact window at upper right 80-90 % corner length:
+        T_crop = T_filt[ int(0.8*len(T_filt)) : int(0.9*len(T_filt))
+                        ,int(0.8*len(T_filt)) : int(0.9*len(T_filt))]
         
-        # plt.imshow(tractions, vmax = 5000)
-        # plt.colorbar()
-        # plt.show()
+        T_crop_raw = T_filt[ int(0.8*len(T)) : int(0.9*len(T))
+                        ,int(0.8*len(T)) : int(0.9*len(T))]
         
+        noise_list.append(np.mean(T_crop))
+        noise_list_raw.append(np.mean(T_crop_raw))
+        plot_sub_image = False
+        if plot_sub_image == True: 
+            plt.imshow(T_crop, vmin = 0, vmax = 10, origin = 'lower', cmap = 'turbo')
+            plt.colorbar()
+            plt.show()
+            #print(noise_list[-1])
         
-    napari.view_image(np.array(f_projection), colormap = 'turbo')
-    #%%
-    # Current adjustments: get  filter to work! 
-    # Best do it in  the following way: 
-    # - load npz file of interest. 
-    # - copy variable
-    # - rewrite it according to filter (set all displacements under threshhold to 0)
-    # - save in new folder (filtered_displacement)
-    # - make alternative folder callable. in TFM reconstruct. 
-    # --> enjoy the finished skript / project
-    #
-    # Done ! filter now works simulation is callable. 
-    # 
-    #
-    # Arising issue: 
-    # The native runtfm.py only exports graphs. 
-    # --> need to export the reconstructed datapoints for proper custom analysis. 
-    # This means we need to insert a code sniplet into runtfm.py that exports the data into a npz file 
-    # OR which is way better, import run_FTTC3d function like we did in the other skript. 
-    # This npz file will then get picked up by this skript, renamed and moved to an appropriate location. 
-    # Analyse the available data in a phase plot (whatever that means)
-    # 
-    # Suggested analysis: 
-    # compare force distribution between the ground "truth" and the filtered data, using a histogram. 
-    # --> arising problem: many different graphs, and only suttle differences. 
-    # available parameters: 
-    # - Stiffness / Youngs modulus 
-    # - Force intensity 
-    # - calculated force 
-    # - standard deviation of force. 
-    # - raw vs filtered 
+        #print('bg_traction: ',noise[-1], ' Pa')
+        # crop center to didtch edges
+        T_crop_center = T_filt[ int(0.2*len(T_filt)) : int(0.8*len(T_filt))
+                        ,int(0.2*len(T_filt)) : int(0.8*len(T_filt))]
+        mean_traction_list.append(np.mean(T_crop_center))
+        peak_traction_filtered.append(np.max(T_crop_center))
+        
+        title =  str(f) + 'nN on ' + str(e) + ' kPa'
 
-    # 1) Plot a map of stiffness youngs modulus and mean forces (meshgrid and image)
-    # 2) Compare the two maps for filtered vs non filtered. 
-    # 
-    # Alternatively: plot deviation of youngs modulus instead of mean modulus; or plot median modulus.
-    # Hypothesis: displacement distributions change according to optical system therefore the reconstructed forces should change as well. 
-    # Is this relevant in our sprectra / parameterspace.
+        show_maps = True 
+        if show_maps == True: 
+            minmin = 0
+            maxmax = None
+            vmax = 1
+            cmap = 'turbo'
+
+            fig, axes = plt.subplots(nrows=1, ncols=3, dpi = 150, figsize = (15,5))
+
+            im1 = axes[0].imshow(T, vmin=minmin, vmax=maxmax,
+                      aspect='auto', cmap= cmap)
+            im2 = axes[1].imshow(T_filt, vmin=minmin, vmax=maxmax,
+                     aspect='auto', cmap= cmap)
+            
+            accuracy  = T_filt / T
+    
+            im3 = axes[2].imshow(accuracy, vmin=0, vmax= None, aspect ='auto', cmap= cmap)
+
+            fig.subplots_adjust(right=0.85)
+            cbar_ax = fig.add_axes([0.88, 0.15, 0.04, 0.7])
+            cbar_ax2 = fig.add_axes([0.99, 0.15, 0.04, 0.7])
+            fig.colorbar(im2, cax=cbar_ax)
+            fig.colorbar(im3, cax = cbar_ax2)
+            fig.suptitle(title)
+            axes[0].set_title('raw')
+            axes[1].set_title('filtered')
+            axes[2].set_title('norm filtered - norm raw')
+            path = 'plotting/traction_maps/' + str() + '.png'
+            #plt.savefig(path)
+            plt.show()
+            #print('max_traction_accuracy: ', (np.max(T)-np.max(T_filt))/np.max(T))
+
+        show_hist = False
+
+        if show_hist == True: 
+            plt.figure(dpi= 150)
+            plt.title(i)
+            bins = np.linspace(0, 6000, 100)
+            hist, bins = np.histogram(T, bins = bins)
+            hist_f, bins_f = np.histogram(T_filt, bins = bins )
+            
+
+            
+            plt.plot(bins[0:-1], hist ,color = 'blue', label = 'raw', alpha = .5)
+            plt.plot(bins[0:-1], hist_f, color = 'red', label = 'filtered', alpha = .5)
+
+            #plt.plot(bins[0:-1], (hist-hist_f)/max(hist), color = 'green', label = 'raw - filtered')
+            plt.xlabel('traction [Pa]')
+            plt.ylabel('frequency')
+            #plt.xlim(0, 0.005)
+            #plt.ylim(0,1500)
+            plt.legend()
+            #plt.savefig('plotting/comparing_hist_'+ i[:-4] +  '.png')
+            plt.show()
 
 
-    # UPDATE: 
-    # checking the documentation of the Blumberg skript revealed that the build in noise function puts a gaussian blur 
-    # onto the displacement field. This is exactly the same the skript provides here
-    # But: our skript here provides more utility in terms of filtering and adjustability. 
-    # --> what is an appropriate way to filter the available data to the presented question?
-    # --> need for a clean formulation of the presented question.
+        
+#%%
 
-    # question: Is mechanosensation real, or only a result of force reconstruction with unsufficient microscope resolution?
-    # --> defining factor for displacement field resolution --> bead density 
-    # --> what influence has microscope resolution onto our system ? 
-    # --> theoretically little to none, because sub pixel resolution
-    # --> under the assumption of perfect bead distribution what does increase of resolution allow? 
-    # --> only advantage: distinguish beads from each other, higher resolved displacement field.
-    # --> rephrase the question: has the dynamic range of recorded displacement an influence on resolved tractions?
-    # --> high displacements are rare but more relevant.
-    # --> how to define upper limit of the dynamic range? --> currently 1um max displacement, but how to replace?
-    # --> mask original image and interpolate max values.
-    # --> how to precicely interpolate only for these values? --> keep changelog?
-    # --> or set them as 1 because max, displacement is reached?
-    # --> How does noise on marker translate to noise in displacement field 
-    # --> noise shape is the same; but is the amplitude the same? 
-    # --> how do we get from microscope resolution error to displacement field error
+# %%
+# Plot line profiles
+plt.figure(dpi = 150)
+plt.title('background tractions for forces across gels')
+plt.plot(np.transpose(noise_list),label =  force_list)
+plt.legend()
+plt.ylabel('T [PA]')
+plt.xlabel('E [kPa]')
+plt.xticks([i for i in range(len(young_list))], young_list)
+plt.show()
 
-    return
+plt.figure(dpi = 150)
+plt.title('background tractions for gels')
+plt.plot(noise_list,label =  young_list)
+plt.legend()
+plt.xticks([i for i in range(len(force_list))], force_list)
+plt.xlabel('F [nN]')
+plt.ylabel('T [PA]')
 
-# Run Skript
-if __name__ == "__main__":
-    main()
+plt.show()
+
+plt.figure(dpi = 150)
+plt.title('background tractions for forces across gels')
+plt.plot(np.transpose(noise_list),label =  force_list)
+plt.legend()
+plt.ylabel('T [PA]')
+plt.xlabel('E [kPa]')
+plt.xticks([i for i in range(len(young_list))], young_list)
+plt.show()
+#%%
+# Plot signal to Noise
+n = int(np.round(len(force_list)/7,0)) #spacing label
+if n == 0: 
+    n = 1
+plt.figure(dpi = 150)#0, figsize=(10,10))
+plt.title('Signal / noise')
+plt.imshow((peak_traction_filtered/(noise_list)),vmax = None, origin ='lower')#, norm = LogNorm(vmin = 1, vmax = 10e3))
+plt.xticks([i for i in range(len(young_list))][::n], np.round(young_list[::n],1))
+plt.yticks([i for i in range(len(force_list))][::n], np.round(force_list[::n],2))
+plt.xlabel('E [kPa]')
+plt.ylabel('F [nN]')
+plt.title('Signal to Noise ratio')
+clb = plt.colorbar()
+clb.ax.set_ylabel('T [Pa]', rotation = -90)
+plt.show()
+
+#%%
+plt.figure(dpi = 150)
+plt.imshow((peak_traction_filtered/(noise_list))>5,vmax = None, origin ='lower')
+plt.xticks([i for i in range(len(young_list))][::n], np.round(young_list[::n],1))
+plt.yticks([i for i in range(len(force_list))][::n], np.round(force_list[::n],2))
+plt.xlabel('E [kPa]')
+plt.ylabel('F [nN]')
+plt.title('Resolvability SNR > 5')
+plt.colorbar()
+plt.show()
+#%%
+x = []
+std = []
+for i in np.transpose(noise_list): 
+    x.append(np.mean(i))
+    std.append(np.std(i))
+
+fig, axes = plt.subplots(dpi = 150)
+plt.plot(young_list, x, c = 'b')
+low = np.array(x) - np.array(std)
+up  = np.array(x) + np.array(std)
+axes.fill_between(np.array(young_list), low, up, facecolor = 'blue', alpha = .25)
+axes.plot(young_list, np.transpose(noise_list), alpha = 0.2, c ='black' )
+
+#plt.ylim(0,500)
+axes.set_xlabel('E [kPa]')
+axes.set_ylabel('T [Pa]')
+axes.set_title('background tractions for gels')
+plt.show()
+#%%
+# plot force projections for desired stiffness
+E = young_list[1] 
+print('Chosen Stiffness: ',E, ' kPa')
+f_projection = []
+for F in force_list:
+    path = 'tractions/tractions_filtered_displacement_' + str(F) + '_nN_on_' + str(E) + '_kPa.npz'
+    npz = np.load(path)
+    tractions = npz['qAbs'] 
+    f_projection.append(tractions)
+    
+    # plt.imshow(tractions, vmax = 5000)
+    # plt.colorbar()
+    # plt.show()
+    
+    
+napari.view_image(np.array(f_projection), colormap = 'turbo')
+#%%
+# Current adjustments: get  filter to work! 
+# Best do it in  the following way: 
+# - load npz file of interest. 
+# - copy variable
+# - rewrite it according to filter (set all displacements under threshhold to 0)
+# - save in new folder (filtered_displacement)
+# - make alternative folder callable. in TFM reconstruct. 
+# --> enjoy the finished skript / project
+#
+# Done ! filter now works simulation is callable. 
+# 
+#
+# Arising issue: 
+# The native runtfm.py only exports graphs. 
+# --> need to export the reconstructed datapoints for proper custom analysis. 
+# This means we need to insert a code sniplet into runtfm.py that exports the data into a npz file 
+# OR which is way better, import run_FTTC3d function like we did in the other skript. 
+# This npz file will then get picked up by this skript, renamed and moved to an appropriate location. 
+# Analyse the available data in a phase plot (whatever that means)
+# 
+# Suggested analysis: 
+# compare force distribution between the ground "truth" and the filtered data, using a histogram. 
+# --> arising problem: many different graphs, and only suttle differences. 
+# available parameters: 
+# - Stiffness / Youngs modulus 
+# - Force intensity 
+# - calculated force 
+# - standard deviation of force. 
+# - raw vs filtered 
+
+# 1) Plot a map of stiffness youngs modulus and mean forces (meshgrid and image)
+# 2) Compare the two maps for filtered vs non filtered. 
+# 
+# Alternatively: plot deviation of youngs modulus instead of mean modulus; or plot median modulus.
+# Hypothesis: displacement distributions change according to optical system therefore the reconstructed forces should change as well. 
+# Is this relevant in our sprectra / parameterspace.
+
+
+# UPDATE: 
+# checking the documentation of the Blumberg skript revealed that the build in noise function puts a gaussian blur 
+# onto the displacement field. This is exactly the same the skript provides here
+# But: our skript here provides more utility in terms of filtering and adjustability. 
+# --> what is an appropriate way to filter the available data to the presented question?
+# --> need for a clean formulation of the presented question.
+
+# question: Is mechanosensation real, or only a result of force reconstruction with unsufficient microscope resolution?
+# --> defining factor for displacement field resolution --> bead density 
+# --> what influence has microscope resolution onto our system ? 
+# --> theoretically little to none, because sub pixel resolution
+# --> under the assumption of perfect bead distribution what does increase of resolution allow? 
+# --> only advantage: distinguish beads from each other, higher resolved displacement field.
+# --> rephrase the question: has the dynamic range of recorded displacement an influence on resolved tractions?
+# --> high displacements are rare but more relevant.
+# --> how to define upper limit of the dynamic range? --> currently 1um max displacement, but how to replace?
+# --> mask original image and interpolate max values.
+# --> how to precicely interpolate only for these values? --> keep changelog?
+# --> or set them as 1 because max, displacement is reached?
+# --> How does noise on marker translate to noise in displacement field 
+# --> noise shape is the same; but is the amplitude the same? 
+# --> how do we get from microscope resolution error to displacement field error
